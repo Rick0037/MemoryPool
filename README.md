@@ -46,7 +46,11 @@ public:
 //_thread static ThreadCache* tlslist =nullptr;
 static __declspec(thread) ThreadCache* tlslist =nullptr;
 ```
-### 4.CentralCache
+### 4.CentralCache  
+![0{){BCI)F@L5K$R938RJSC](https://user-images.githubusercontent.com/86883267/129194140-fabd83a7-d0ab-4678-8ada-0b6f063647d8.png)  
+中心缓存时以一个span块为单位进行储存的，每一个span块跟着一个freelist，在线程的内存不够是可以来中心缓存进行申请  
+申请的时候直接把对应大小的一个span块拿走，span块连接freelist列表，并把
+
 ```
 class CentralCache {
 public :
@@ -77,11 +81,13 @@ private :
 ### 7.测试结果展示
 
 ### 8.目录文件结构
-ThreadCache.cpp	  线程缓存
+ThreadCache.cpp	    线程缓存  
 ThreadCache.h     
-CentralCache.cpp   中心缓存
+CentralCache.cpp    中心缓存  
 CentralCache.h	    
-PageCache.cpp	    页缓存
+PageCache.cpp	      页缓存  
 PageCache.h         
-Common.h	    基础组件
-ConcurrentAlloc.h    对外接口
+Common.h	        基础组件  
+ConcurrentAlloc.h   对外接口  
+benchmark      标准的测试接口
+unittest         单元测试接口
