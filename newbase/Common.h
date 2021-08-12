@@ -208,21 +208,20 @@ public:
 
 struct Span
 {
-    //页号 
-    //页数
-    PageID _pageid=0;
-    size_t _npage=0;
+    //页号与页数
+    PageID _pageid = 0;
+    size_t _npage = 0;
     
     //前指针和尾指针
-    Span* _prev=nullptr;
-    Span* _next=nullptr;
+    Span* _prev = nullptr;
+    Span* _next = nullptr;
     //页面的list
-    void* _list=nullptr;
+    void* _list = nullptr;
     
     //目标的大小
-    size_t _objsize=0;
+    size_t _objsize = 0;
     //使用的数量
-    size_t _usecount =0;
+    size_t _usecount = 0;
 };
 
 class SpanList
