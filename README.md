@@ -81,6 +81,16 @@ private :
 ```
 
 ### 5.PageCache
+![)SEK40HTA2GM_S2PT$TG7ZN](https://user-images.githubusercontent.com/86883267/129204377-53d0da24-c931-4ad0-a19f-035dd1edb796.png)  
+
+PageCache申请内存：  
+当中心缓存向页缓存申请内存时，页缓存先检查对应大小的位置有没有span，如果没有则向更大页寻找一个span，如果找到则分裂成两个。  
+如果找到128 page都没有合适的span，则向系统使用mmap、brk(Linux)或者是VirtualAlloc(windows)等方式申请128页挂在自由链表中，再重复1中的过程。
+
+PageCache释放内存：
+如果中心缓存释放回一个span，则依次寻找span的前后page id的span，看是否可以合并，如果能够合并继续向前寻找。这样就可以将切小的内存合并收缩成大的span，减少内存碎片。但是合并的最大页数超过128页，则不能合并。
+如果线程缓存想直接申请大于64k的内存，直接去页缓存去申请，当在页缓存申请时，如果申请的内存大于128页，则直接向系统申请这块内存，如果小于128页，则去SpanList去查找。
+
 ```
 class PageCache 
 {
@@ -119,8 +129,12 @@ private:
 4线程或8线程在每一次申请8b，16b，32b，等多种情况下进行测试  
 每组进行100000次在windows下申请内存与malloc进行申请时间对比 平均申请时间之后malloc的三分之一！
 
+### 8.不足与缺陷  
+1.底层还是用malloc 与free来实现的并没有实现独立的申请方法，
+2.只实现了win平台下的virtualloc 没有实现跨平台的操作 在Linux中可能会实现mmap（共享映射区文件）。
 
-### 8.目录文件结构
+### 9.目录文件结构
+base目录下{
 ThreadCache.cpp	    线程缓存  
 ThreadCache.h     
 CentralCache.cpp    中心缓存  
@@ -128,6 +142,10 @@ CentralCache.h
 PageCache.cpp	      页缓存  
 PageCache.h         
 Common.h	        基础组件  
-ConcurrentAlloc.h   对外接口  
+ConcurrentAlloc.h   对外接口
+}
+test目录下
+{
 benchmark      标准的测试接口
 unittest         单元测试接口
+}
