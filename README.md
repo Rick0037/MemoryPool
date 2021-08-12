@@ -48,9 +48,15 @@ static __declspec(thread) ThreadCache* tlslist =nullptr;
 ```
 ### 4.CentralCache  
 ![0{){BCI)F@L5K$R938RJSC](https://user-images.githubusercontent.com/86883267/129194140-fabd83a7-d0ab-4678-8ada-0b6f063647d8.png)  
-中心缓存时以一个span块为单位进行储存的，每一个span块跟着一个freelist，在线程的内存不够是可以来中心缓存进行申请  
-申请的时候直接把对应大小的一个span块拿走，span块连接freelist列表，并把
 
+Central Cache申请内存：
+当线程缓存中没有内存时，会向中心缓存申请一定数量的内存对象，中心指定位置的Spanlist中挂着span，从span中取出并给线程缓存，这个过程是需要加锁的，可能会存在多个线程同时取对象，会导致线程安全的问题。
+当中心缓存中没有span对象时，就向页缓存申请一个span对象，span以页为单位，我们将span对象切成需要的内存大小并链接起来，挂到中心缓存中。
+中心缓存的中的每一个span都有一个use_count，分配一个对象给线程缓存，就++use_count，当这个span的使用计数为0，说明这个span所有的内存对象都是空闲的，然后将它交给页缓存合并成更大的页，减少内存碎片。
+
+Central Cache释放内存：
+当线程缓存过长或者线程销毁，则会将内存释放回中心缓存中，每释放一个内存对象，检查该内存所在的span使用计数是否为空，释放回来一个时--use_count。
+当use_count减到0时则表示所有对象都回到了span，则将span释放回页缓存，在页缓存中会对前后相邻的空闲页进行合并。
 ```
 class CentralCache {
 public :
@@ -75,6 +81,36 @@ private :
 ```
 
 ### 5.PageCache
+```
+class PageCache 
+{
+public:
+    //单例模式
+    static PageCache* GetInstence ()
+    {
+        return &_inst;
+    }
+    //从外部申请内存
+    Span* AllocBigPageObj(size_t size);
+    //从内部释放内存
+    void FreeBigPageObj(void *ptr,Span*span);
+    //获取内部的空间以页为单位
+    Span*_NewSpan(size_t n);
+    Span* NewSpan(size_t n);
+    //获取从对象到span的映射
+    Span* MapObjectToSpan(void*obj);
+    //释放Span空间回调PageCache，合并
+    void ReleaseSpanToPageCache(Span*span);
+    
+private:
+    SpanList _spanlist[NLIST];
+    std::unordered_map<PageID,Span*> _idspanmap;  
+    std::mutex _mutex;
+    PageCache(){}    //单例模式
+    PageCache(const PageCache&)=delete ;
+    static PageCache _inst; 
+};
+```
 
 ### 6.实现细节
 
