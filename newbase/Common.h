@@ -13,6 +13,12 @@
 using std::cout;
 using std::endl;
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+// ..
+#endif
+
 const size_t MAX_BYTES=64*1024;
 const size_t NLIST =16+56+56+56;
 const size_t PAGE_SHIFT =12;
@@ -59,11 +65,11 @@ public:
     //直接把对象整个都重置出去
     void* PopRange()
     {
-        void * obj=_list
+        void * obj=_list;
         _size=0;
         _list=nullptr;
-        return _obj;
-    }
+        return obj;
+        }
     bool Empty()
     {
         return _size==0;
@@ -90,15 +96,15 @@ class SizeClass
 {
 public:
     //静态内联 对内存取整
-    inline static size_t _Index(size_t size, size_t alignnum)
+    inline static size_t _Index(size_t size, size_t align)
     {
-        size_t alignnum = 1 <<alignnum;
-        return ((size+alignnum-1)>>alignnum)-1;
+        size_t alignnum = 1 <<align;
+        return ((size+alignnum-1)>>align)-1;
 
     }
     
     //先加再向上就是向上取整了
-    inline static size_t _Roundup(size_t size , size_t alignnum)
+    inline static size_t _Roundup(size_t size , size_t align)
     {
         // 比如size是15 < 128,对齐数align是8，那么要进行向上取整，
 		// ((15 + 7) / 8) * 8就可以了
@@ -174,21 +180,20 @@ public:
     static size_t NumMoveSize(size_t size)
     {
         if (size==0) return 0;
-        int num =(int)(MAX_BYTES/size)
+        int num =(int)(MAX_BYTES/size);
         if (num<2) return 2;
         else if (num>521) return 512;
         return num;
 
     }
 
-    //
+    //计算需要申请多少页
     static size_t NumMovePage(size_t size)
     {
-        size_t num =NumMoveSize(size)
+        size_t num =NumMoveSize(size);
         size_t npage =num*size;
         npage >>=PAGE_SHIFT;
-        if (npage==0) napage =1 ;
-        
+        if (npage==0) npage =1;
         return npage;
 
     }
@@ -234,11 +239,11 @@ public:
     //析构函数
     ~SpanList()
     {
-        Span*cur =_head->next;
+        Span*cur =_head->_next;
         while(cur!=_head)
         {
             Span*q=cur;
-            cur =cur->next;
+            cur =cur->_next;
             delete q;
         }
         delete _head;//需要head做循环条件 所以得最后释放_head
@@ -248,7 +253,7 @@ public:
     //迭代器第一个指针
     Span* Begin()
     {
-        return _head->next;
+        return _head->_next;
     }
     
     //循环队列最后一个指针
@@ -260,7 +265,7 @@ public:
     //判断是否为空
     bool Empty()
     {
-        return _head==(_head->next);
+        return _head==(_head->_next);
     }
 
     //插入函数在
@@ -270,7 +275,7 @@ public:
         Span*prev=pos->_prev;
         //新结点复制
         newspan->_prev=prev;
-        newspan->next=pos;
+        newspan->_next=pos;
         //老节点
         prev->_next=newspan;
         pos->_prev=newspan;
@@ -304,7 +309,7 @@ public:
         Erase(End());
         return back;
     }
-    Span* PopFornt()
+    Span* PopFront()
     {
         Span* front=_head->_next;
         Erase(Begin());
@@ -325,7 +330,7 @@ public:
     //防止复制构造函数和复制运算符
     SpanList(const SpanList&) =delete;
     SpanList& operator=(const SpanList)=delete; 
-private:
+public:
     //多线程插入删除需要锁变量
     Span* _head;
     std::mutex _mutex;

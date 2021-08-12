@@ -10,6 +10,12 @@
 #include <algorithm>
 #include <assert.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+// ..
+#endif
+
 using std::cout;
 using std::endl;
 

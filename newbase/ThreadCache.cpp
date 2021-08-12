@@ -1,12 +1,13 @@
 #include "ThreadCache.h"
+#include "CentralCache.h"
 
-void ThreadCache::Allocate(size_t size)
+void* ThreadCache::Allocate(size_t size)
 {
     size_t index =SizeClass::Index(size); 
     Freelist* freelist =&_freelist[index];
-    if (!freelist->empty())
+    if (!freelist->Empty())
     {
-        return freelist.Pop();
+        return freelist->Pop();
     }
     // 自由链表为空的要去中心缓存中拿取内存对象，一次取多个防止多次去取而加锁带来的开销 
 	// 均衡策略:每次中心堆分配给ThreadCache对象的个数是个慢启动策略
@@ -21,15 +22,15 @@ void ThreadCache::Allocate(size_t size)
 
 }
 
-
+//如果过大了需要进行回收操作
 void ThreadCache::Deallocate(void* ptr, size_t size)
 {
     size_t index =SizeClass::Index(size);
-    Freelist* freelsit =_freelist[index];
+    Freelist* freelist =&_freelist[index];
     freelist->Push(ptr);
     if (freelist->Size()>=freelist->MaxSize())
     {
-        ListTooLong(freelist,size());//如果过大了需要进行回收操作
+        ListTooLong(freelist,size);
     } 
 
 }
@@ -39,7 +40,7 @@ void ThreadCache::Deallocate(void* ptr, size_t size)
 void* ThreadCache::FetchFromCentralCache(size_t index, size_t size)
 {
     //前面做完了
-    Freelist* freelist =_freelist[index];
+    Freelist* freelist =&_freelist[index];
     size_t maxsize =freelist->MaxSize();//最大数值
     size_t numtomove =min(SizeClass::NumMoveSize(size),maxsize);//nummovesize(max/size)
 
@@ -51,11 +52,11 @@ void* ThreadCache::FetchFromCentralCache(size_t index, size_t size)
     //未完成FetchRangeObj
     if(batchsize>1)
     {
-        freelist->PushRange(NEXT_OBJ(start),end,batchsize-1);//charufreelist
+        freelist->PushRange(NEXT_OBJ(start),end,batchsize-1);//插入freelist
     }
     if (batchsize>=freelist->MaxSize())
     {
-        freelsit->SetMaxSize(maxsize+1)
+        freelist->SetMaxSize(maxsize+1);
     }
     //算是返回了值了
     return start;
@@ -63,9 +64,10 @@ void* ThreadCache::FetchFromCentralCache(size_t index, size_t size)
 
 }
 
+//size数量
 void ThreadCache::ListTooLong(Freelist* list, size_t size)
 {
     //全回收了？
     void* start = list->PopRange();
-    CentralCache::Getinstaence()->ReleaseListToSpans(start,size);
+    CentralCache::Getinstence()->ReleaseListToSpans(start,size);
 }

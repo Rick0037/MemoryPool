@@ -17,7 +17,7 @@
 class CentralCache {
 public :
     //获取实例的单例模式
-    static CentralCache *Getinstaence()
+    static CentralCache *Getinstence()
     {
         return &_inst;
     }

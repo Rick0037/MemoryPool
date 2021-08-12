@@ -1,36 +1,36 @@
 #include "Common.h"
 #include "ConcurrentAlloc.h"
 
-#define SIZE 16//Ã¿´Î·ÖÅäÄÚ´æµÄ´óĞ¡  16×Ö½Ú
+#define SIZE 16//æ¯æ¬¡åˆ†é…å†…å­˜çš„å¤§å°  16å­—èŠ‚
 
-void BenchmarkMalloc(size_t ntimes, size_t nworks, size_t rounds)//nworks¸öÏß³Ì²¢·¢Ö´ĞĞ roundsÂÖ´Î£¬Ã¿ÂÖ´Î·ÖÅäntimes´ÎÄÚ´æ: 
+void BenchmarkMalloc(size_t ntimes, size_t nworks, size_t rounds)//nworksä¸ªçº¿ç¨‹å¹¶å‘æ‰§è¡Œ roundsè½®æ¬¡ï¼Œæ¯è½®æ¬¡åˆ†é…ntimesæ¬¡å†…å­˜: 
 {
-	std::vector<std::thread> vthread(nworks);//C++11µÄÏß³Ì¿â  ÉùÃ÷nworks¸öÏß³Ì
-	size_t malloc_costtime = 0;//³õÊ¼»¯Ïß³ÌÖ´ĞĞÊ±¼ä
+	std::vector<std::thread> vthread(nworks);//C++11çš„çº¿ç¨‹åº“  å£°æ˜nworksä¸ªçº¿ç¨‹
+	size_t malloc_costtime = 0;//åˆå§‹åŒ–çº¿ç¨‹æ‰§è¡Œæ—¶é—´
 	size_t free_costtime = 0;
 	for (size_t k = 0; k < nworks; ++k)//
 	{
-		vthread[k] = std::thread([&, k]() {   //´Ë´¦½«Ã¿Ò»¸öÏß³Ì°ó¶¨µ½Ò»¸ölambdaÄäÃûº¯Êı  () ÒşÊ½²¶»ñ&ÒÔ¼°²¶»ñkÖµ) ¾ÍÊÇÏß³ÌÖ´ĞĞÄÚ´æ·ÖÅäµÄº¯Êı
+		vthread[k] = std::thread([&, k]() {   //æ­¤å¤„å°†æ¯ä¸€ä¸ªçº¿ç¨‹ç»‘å®šåˆ°ä¸€ä¸ªlambdaåŒ¿åå‡½æ•°  () éšå¼æ•è·&ä»¥åŠæ•è·kå€¼) å°±æ˜¯çº¿ç¨‹æ‰§è¡Œå†…å­˜åˆ†é…çš„å‡½æ•°
 			std::vector<void*> v;
-			v.reserve(ntimes);//Í¨¹ıreverse¸Ä±ävectorµÄÈİÁ¿ ±äÎªntimes´óĞ¡
-			for (size_t j = 0; j < rounds; ++j)//Ã¿¸öÏß³ÌÖ´ĞĞËüµÄº¯ÊıµÄÊ±ºò Ö´ĞĞrounds´Î 
+			v.reserve(ntimes);//é€šè¿‡reverseæ”¹å˜vectorçš„å®¹é‡ å˜ä¸ºntimeså¤§å°
+			for (size_t j = 0; j < rounds; ++j)//æ¯ä¸ªçº¿ç¨‹æ‰§è¡Œå®ƒçš„å‡½æ•°çš„æ—¶å€™ æ‰§è¡Œroundsæ¬¡ 
 			{
 				size_t begin1 = clock();
 				for (size_t i = 0; i < ntimes; i++)
 				{
-					v.push_back(malloc(SIZE));//Ã¿´Î·ÖÅäntimes´ÎÄÚ´æ Í¬Ê±°ÑÖ¸Ïò·ÖÅäµÄÄÚ´æ¿Õ¼äµÄÖ¸Õë·ÅÈëvector
+					v.push_back(malloc(SIZE));//æ¯æ¬¡åˆ†é…ntimesæ¬¡å†…å­˜ åŒæ—¶æŠŠæŒ‡å‘åˆ†é…çš„å†…å­˜ç©ºé—´çš„æŒ‡é’ˆæ”¾å…¥vector
 				}
 				size_t end1 = clock();
 
 				size_t begin2 = clock();
 				for (size_t i = 0; i < ntimes; i++)
 				{
-					free(v[i]);//Ã¿´ÎÊÍ·Åntimes´ÎÄÚ´æ 
+					free(v[i]);//æ¯æ¬¡é‡Šæ”¾ntimesæ¬¡å†…å­˜ 
 				}
 				size_t end2 = clock();
 				v.clear();
-				malloc_costtime += end1 - begin1;//¼ÇÂ¼ntimes´Î·ÖÅäÄÚ´æ»¨·ÑµÄÊ±¼ä ÒÀ´ÎÀÛ¼Ó×îºó»áÊÇ·ÖÅänworks* rounds*ntimes´ÎÄÚ´æ·ÖÅäµÄ×ÜÊ±¼ä
-				free_costtime += end2 - begin2;//¼ÇÂ¼ntimes´ÎÊÍ·ÅÄÚ´æ»¨·ÑµÄÊ±¼ä ÒÀ´ÎÀÛ¼Ó×îºó»áÊÇ·ÖÅänworks* rounds*ntimes´ÎÄÚ´æÊÍ·ÅµÄ×ÜÊ±¼ä
+				malloc_costtime += end1 - begin1;//è®°å½•ntimesæ¬¡åˆ†é…å†…å­˜èŠ±è´¹çš„æ—¶é—´ ä¾æ¬¡ç´¯åŠ æœ€åä¼šæ˜¯åˆ†é…nworks* rounds*ntimesæ¬¡å†…å­˜åˆ†é…çš„æ€»æ—¶é—´
+				free_costtime += end2 - begin2;//è®°å½•ntimesæ¬¡é‡Šæ”¾å†…å­˜èŠ±è´¹çš„æ—¶é—´ ä¾æ¬¡ç´¯åŠ æœ€åä¼šæ˜¯åˆ†é…nworks* rounds*ntimesæ¬¡å†…å­˜é‡Šæ”¾çš„æ€»æ—¶é—´
 			}
 		});
 	}
@@ -38,12 +38,12 @@ void BenchmarkMalloc(size_t ntimes, size_t nworks, size_t rounds)//nworks¸öÏß³Ì²
 	{
 		t.join();
 	}
-	printf("%u¸öÏß³Ì²¢·¢Ö´ĞĞ%uÂÖ´Î£¬Ã¿ÂÖ´Îmalloc %u´Î: »¨·Ñ£º%u ms\n", nworks, rounds, ntimes, malloc_costtime);
-	printf("%u¸öÏß³Ì²¢·¢Ö´ĞĞ%uÂÖ´Î£¬Ã¿ÂÖ´Îfree %u´Î: »¨·Ñ£º%u ms\n", nworks, rounds, ntimes, free_costtime);
-	printf("%u¸öÏß³Ì²¢·¢malloc&free %u´Î£¬×Ü¼Æ»¨·Ñ£º%u ms\n", nworks, nworks*rounds*ntimes, malloc_costtime + free_costtime);
+	printf("%uä¸ªçº¿ç¨‹å¹¶å‘æ‰§è¡Œ%uè½®æ¬¡ï¼Œæ¯è½®æ¬¡malloc %uæ¬¡: èŠ±è´¹ï¼š%u ms\n", nworks, rounds, ntimes, malloc_costtime);
+	printf("%uä¸ªçº¿ç¨‹å¹¶å‘æ‰§è¡Œ%uè½®æ¬¡ï¼Œæ¯è½®æ¬¡free %uæ¬¡: èŠ±è´¹ï¼š%u ms\n", nworks, rounds, ntimes, free_costtime);
+	printf("%uä¸ªçº¿ç¨‹å¹¶å‘malloc&free %uæ¬¡ï¼Œæ€»è®¡èŠ±è´¹ï¼š%u ms\n", nworks, nworks*rounds*ntimes, malloc_costtime + free_costtime);
 }
 
-// µ¥ÂÖ´ÎÉêÇëÊÍ·Å´ÎÊı Ïß³ÌÊı ÂÖ´Î
+// å•è½®æ¬¡ç”³è¯·é‡Šæ”¾æ¬¡æ•° çº¿ç¨‹æ•° è½®æ¬¡
 void BenchmarkConcurrentMalloc(size_t ntimes, size_t nworks, size_t rounds)
 {
 	std::vector<std::thread> vthread(nworks);
@@ -78,10 +78,10 @@ void BenchmarkConcurrentMalloc(size_t ntimes, size_t nworks, size_t rounds)
 	{
 		t.join();
 	}
-	printf("%u¸öÏß³Ì²¢·¢Ö´ĞĞ%uÂÖ´Î£¬Ã¿ÂÖ´Îconcurrent alloc %u´Î: »¨·Ñ£º%u ms\n", nworks, rounds, ntimes, malloc_costtime);
-		printf("%u¸öÏß³Ì²¢·¢Ö´ĞĞ%uÂÖ´Î£¬Ã¿ÂÖ´Îconcurrent dealloc %u´Î: »¨·Ñ£º%u ms\n",
+	printf("%uä¸ªçº¿ç¨‹å¹¶å‘æ‰§è¡Œ%uè½®æ¬¡ï¼Œæ¯è½®æ¬¡concurrent alloc %uæ¬¡: èŠ±è´¹ï¼š%u ms\n", nworks, rounds, ntimes, malloc_costtime);
+		printf("%uä¸ªçº¿ç¨‹å¹¶å‘æ‰§è¡Œ%uè½®æ¬¡ï¼Œæ¯è½®æ¬¡concurrent dealloc %uæ¬¡: èŠ±è´¹ï¼š%u ms\n",
 		nworks, rounds, ntimes, free_costtime);
-	printf("%u¸öÏß³Ì²¢·¢concurrent alloc&dealloc %u´Î£¬×Ü¼Æ»¨·Ñ£º%u ms\n",
+	printf("%uä¸ªçº¿ç¨‹å¹¶å‘concurrent alloc&dealloc %uæ¬¡ï¼Œæ€»è®¡èŠ±è´¹ï¼š%u ms\n",
 		nworks, nworks*rounds*ntimes, malloc_costtime + free_costtime);
 }
 
@@ -90,7 +90,7 @@ int main()
 {
 	cout << "==========================================================" << endl;
 
-	BenchmarkMalloc(100, 10000, 10);//²¢·¢10000¸öÏß³Ì Ã¿¸öÏß³ÌÖ´ĞĞ10´ÎÃ¿´Î½øĞĞ100´ÎÄÚ´æ·ÖÅä 
+	BenchmarkMalloc(100, 10000, 10);//å¹¶å‘10000ä¸ªçº¿ç¨‹ æ¯ä¸ªçº¿ç¨‹æ‰§è¡Œ10æ¬¡æ¯æ¬¡è¿›è¡Œ100æ¬¡å†…å­˜åˆ†é… 
 	cout << endl;
 	BenchmarkConcurrentMalloc(100, 10000, 10);
 	cout << endl << endl;
