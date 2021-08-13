@@ -128,7 +128,7 @@ private:
 ### 7.测试结果展示
 ![H}IBI8JD)7A~J YAC3`$ 12](https://user-images.githubusercontent.com/86883267/129199391-bb21fa17-da53-4028-a850-75d453d09a55.png)  
 4线程或8线程在每一次申请8b，16b，32b，等多种情况下进行测试  
-每组进行100000次在windows下申请内存与malloc进行申请时间对比 平均申请时间之后malloc的三分之一！
+每组进行100000次在windows下申请内存与malloc进行申请时间对比 平均申请时间只有malloc的三分之一！
 
 ### 8.不足与缺陷  
 1.底层还是用malloc 与free来实现的并没有实现独立的申请方法，
